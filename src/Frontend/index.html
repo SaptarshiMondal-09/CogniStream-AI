@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CogniStream AI Assistant</title>
+    <!-- Your custom SVG logo -->
+    <link rel="icon" href="../Assets/CogniStream.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="text-[#ececec] h-screen flex overflow-hidden selection:bg-indigo-500 selection:text-white relative"
+  >
+    <div
+      id="auth-modal"
+      class="fixed inset-0 bg-gray-900 bg-opacity-95 z-50 flex items-center justify-center transition-opacity"
+    >
+      <div
+        class="bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700"
+      >
+        <div id="login-section">
+          <h2 class="text-2xl font-bold text-white mb-6 text-center">
+            Welcome to CogniStream
+          </h2>
+          <form id="login-form" class="space-y-4">
+            <input
+              type="email"
+              id="login-email"
+              placeholder="Email"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Password"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition duration-200"
+            >
+              Log In
+            </button>
+          </form>
+          <p class="text-gray-400 mt-4 text-center text-sm">
+            Don't have an account?
+            <button
+              type="button"
+              onclick="toggleAuthMode()"
+              class="text-blue-400 hover:text-blue-300 font-semibold"
+            >
+              Sign up
+            </button>
+          </p>
+        </div>
+
+        <div id="register-section" class="hidden">
+          <h2 class="text-2xl font-bold text-white mb-6 text-center">
+            Create an Account
+          </h2>
+          <form id="register-form" class="space-y-4">
+            <input
+              type="text"
+              id="reg-name"
+              placeholder="Full Name"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="email"
+              id="reg-email"
+              placeholder="Email"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="text"
+              id="reg-country"
+              placeholder="Country"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <input
+              type="password"
+              id="reg-password"
+              placeholder="Password"
+              required
+              class="w-full bg-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="submit"
+              class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition duration-200"
+            >
+              Register
+            </button>
+          </form>
+          <p class="text-gray-400 mt-4 text-center text-sm">
+            Already have an account?
+            <button
+              type="button"
+              onclick="toggleAuthMode()"
+              class="text-blue-400 hover:text-blue-300 font-semibold"
+            >
+              Log in
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+    <!-- Sidebar Drawer (Chat History) -->
+    <aside
+      id="sidebar"
+      class="w-64 bg-[#171717] flex-shrink-0 flex flex-col absolute z-40 h-full md:relative transition-all duration-300 border-r border-white/5 -translate-x-full md:translate-x-0"
+    >
+      <div class="p-3 h-14 flex items-center justify-between">
+        <button
+          onclick="toggleSidebar()"
+          class="p-2 hover:bg-[#2f2f2f] rounded-lg transition-colors flex items-center justify-center text-slate-400 hover:text-white"
+          title="Close Sidebar"
+        >
+          <img
+            src="../Assets/CogniStream.svg"
+            class="w-6 h-6 object-contain"
+            alt="Close Sidebar"
+          />
+        </button>
+
+        <button
+          onclick="startNewChat()"
+          class="p-2 hover:bg-[#2f2f2f] rounded-lg transition-colors text-slate-400 hover:text-white"
+          title="New Chat"
+        >
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <div
+        id="history-list"
+        class="flex-1 overflow-y-auto p-2 space-y-1 hide-scrollbar"
+      ></div>
+
+      <div class="mt-auto pt-4 pb-4 border-t border-gray-700">
+        <div class="flex items-center justify-between text-gray-300 px-4">
+          <span id="user-display-name" class="font-semibold text-sm truncate"
+            >Not Logged In</span
+          >
+          <button
+            onclick="logout()"
+            class="text-red-400 hover:text-red-300 text-sm flex items-center gap-1"
+            title="Log Out"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              ></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col h-full w-full z-10 relative bg-[#212121]">
+      <!-- Header -->
+      <header
+        class="py-2 px-3 sticky top-0 flex-shrink-0 z-10 h-14 flex items-center"
+      >
+        <!-- Floating Logo Toggle (Shows only when Sidebar is Closed) -->
+        <button
+          id="main-toggle-btn"
+          onclick="toggleSidebar()"
+          class="hidden p-2 hover:bg-[#2f2f2f] rounded-lg transition-colors items-center justify-center text-slate-400 hover:text-white mr-1"
+          title="Open Sidebar"
+        >
+          <img
+            src="../Assets/CogniStream.svg"
+            class="w-6 h-6 object-contain"
+            alt="Open Sidebar"
+          />
+        </button>
+
+        <!-- CogniStream AI (Click to Start New Chat) -->
+        <button
+          onclick="startNewChat()"
+          class="text-[18px] font-semibold text-[#ececec] hover:bg-[#2f2f2f] rounded-lg px-3 py-1.5 transition-colors flex items-center gap-1.5"
+          title="Start a New Chat"
+        >
+          CogniStream AI
+          <svg
+            class="w-4 h-4 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            ></path>
+          </svg>
+        </button>
+      </header>
+
+      <!-- Chat Container -->
+      <main
+        id="chat-container"
+        class="flex-1 overflow-y-auto p-4 sm:p-6 flex flex-col z-10 scroll-smooth"
+      >
+        <!-- Welcome Screen -->
+        <div
+          id="welcome-screen"
+          class="flex-1 flex flex-col items-center justify-center text-center px-4 msg-enter h-full pb-[15vh]"
+        >
+          <h2
+            class="text-[32px] sm:text-[36px] font-semibold text-white tracking-tight"
+          >
+            How can I assist you today?
+          </h2>
+        </div>
+      </main>
+
+      <!-- Input Footer -->
+      <footer class="w-full px-4 pb-6 pt-2 z-20 flex-shrink-0 bg-[#212121]">
+        <div
+          class="max-w-3xl mx-auto bg-[#2f2f2f] rounded-[2rem] p-1.5 pl-3 flex gap-2 items-end transition-all focus-within:bg-[#383838]"
+        >
+          <textarea
+            id="user-input"
+            rows="1"
+            class="w-full bg-transparent border-none px-1 py-2.5 text-[#ececec] placeholder-slate-400 focus:outline-none resize-none max-h-32 text-sm sm:text-base leading-relaxed"
+            placeholder="Ask CogniStream anything..."
+          ></textarea>
+
+          <!-- Send Button -->
+          <button
+            id="send-btn"
+            class="bg-white text-black hover:bg-gray-200 rounded-full p-2 mb-0.5 mr-0.5 transition-all duration-200 flex items-center justify-center flex-shrink-0 w-8 h-8"
+          >
+            <svg
+              class="w-4 h-4 transform rotate-[-90deg]"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            </svg>
+          </button>
+        </div>
+        <p class="text-center text-xs text-slate-400 mt-3 font-medium">
+          CogniStream can make mistakes. Consider verifying important
+          information.
+        </p>
+      </footer>
+    </div>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div
+      id="sidebar-overlay"
+      onclick="toggleSidebar()"
+      class="fixed inset-0 bg-black/60 z-30 hidden md:hidden transition-opacity"
+    ></div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
